@@ -1,6 +1,10 @@
 body {
+    background-color: #dfd6c9;
+    color: #3e7989;
+    /*
     color: #fff6e9;
     background-color: #6e8999;
+    */
 }
 
 .tegomin {
@@ -19,4 +23,16 @@ body {
     font-family: "Young Serif", serif;
     font-weight: 400;
     font-style: normal;
+}
+
+/*
+// <uniquifier>: Use a unique and descriptive class name
+// <weight>: Use a value from 100 to 700
+*/
+
+.roboto-mono-may {
+  font-family: "Roboto Mono", serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
