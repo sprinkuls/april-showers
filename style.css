@@ -1,12 +1,46 @@
 body {
     background-color: #dfd6c9;
     color: #3e7989;
-    /*
-    color: #fff6e9;
-    background-color: #6e8999;
-    */
+    /* color: #fff6e9; background-color: #6e8999; */
 }
 
+#title {
+    max-width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+
+    padding-left: 2em;
+    padding-right: 2em;
+
+    border: 0.3em solid #2e5979;
+    border-radius: 0.5em;
+}
+
+#city {
+    text-align: center;
+    font-size: 1.5em;
+    margin: 0;
+}
+
+#mainline {
+    margin: 0.25em;
+    text-align: center;
+    font-size: xx-large;
+}
+
+#time {
+    font-size: 1.5em;
+    color: #2e5979;
+}
+
+#temp {
+    font-size: 1.5em;
+    color: #2e5979;
+}
+
+/**********/
+/********** font stuff below **********/
+/**********/
 .tegomin {
     font-family: "New Tegomin", serif;
     font-weight: 400;
@@ -24,11 +58,6 @@ body {
     font-weight: 400;
     font-style: normal;
 }
-
-/*
-// <uniquifier>: Use a unique and descriptive class name
-// <weight>: Use a value from 100 to 700
-*/
 
 .roboto-mono-may {
   font-family: "Roboto Mono", serif;

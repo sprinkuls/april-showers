@@ -13,51 +13,6 @@ function getLatLong() {
     return [lat, long];
 }
 
-function getLatLong2(callback) {
-  let lat, long;
-  fetch ('http://ip-api.com/json')
-    .then((response) => response.json())
-    .then(data => {
-      lat = data.lat;
-      long = data.lon;
-      console.log('B');
-      console.log(lat, long);
-      let [rise, set] = callback(lat, long);
-      console.log(rise, set);
-    }).catch(error => console.error('oops! no geolocation: ', error))
-}
-
-// this syntax is freaky (coming from C-style stuff)
-fetch('config.json')
-    .then((response) => response.json())
-    .then(data => {
-        const openweather = data.openweather;
-    fetch ('http://ip-api.com/json')
-        .then((response) => response.json())
-        .then(data => {
-            lat = data.lat;
-            lon = data.lon;
-            // so NOW we use these values in a call to openweather
-            const request = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweather}&units=imperial`;
-            fetch(request)
-                .then((response) => response.json())
-                .then((data) => {
-                    const city = data.name;
-                    const temp = data.main.temp;
-                    const fl = data.main.feels_like;
-                    const elem = document.getElementById("weather");
-                    elem.innerHTML = `you are in ${city}; it's ${temp}F out, and feels like ${fl}F.`;
-                    elem.innerHTML += ' i know where you are :-)'
-                })
-                .catch(error => console.error('Couldn\'t get info from openweather:', error))
-        })
-        .catch(error => console.error('oops! no geolocation: ', error))
-    })
-    .catch(error => console.error('Couldn\'t load config.json:', error))
-    //TODO: figure out if i'm catching these things right lol
-/*
-*/
-
 // returns [sunrisetime, sunsettime]
 // it also doesn't work!
 function getRiseSetBAD(lat, long) {
@@ -212,27 +167,75 @@ function getBackgroundColor() {
 function setTime() {
   let element = document.getElementById("time");
   let date = new Date(Date.now());
-  let hrs = date.getHours(); if (hrs == 0) hrs = 12; else if (hrs > 12) hrs = hrs - 12;
   let mins = date.getMinutes(); if (mins < 10) mins = `0` + mins;
+  let hrs = date.getHours();
+  if (hrs == 0) {
+    hrs = 12;
+    mins += ' AM';
+  } else if (hrs > 12) {
+    hrs = hrs - 12;
+    mins += ' PM';
+  } else {
+    mins += ' AM';
+  }
   console.log(date, hrs, mins);
   element.innerHTML = `${hrs}:${mins}`;
 }
 
+function setTemp() {
+  // get keys from me secrets file (since this size project doesn't warrant/need a backend)
+  fetch('config.json')
+      .then((response) => response.json())
+      .then(data => {
+          const openweather = data.openweather;
+      // get location from IP (could also be done with geolocation api)
+      // https://ip-api.com/
+      fetch ('http://ip-api.com/json')
+          .then((response) => response.json())
+          .then(data => {
+              lat = data.lat;
+              lon = data.lon;
+              // now we use these values in a call to openweather
+              ////const request = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweather}&units=imperial`;
+              ////for now, use this sample response to not send tons of reqs to openweather
+              const request = 'sample.json'
+              fetch(request)
+                  .then((response) => response.json())
+                  .then((data) => {
+                    data = data.openweather;
+                    console.log(data);
+                    // process JSON returned by openweather
+                    // https://openweathermap.org/api/one-call-api
+                      const city = data.name;
+                      const temp = Math.round(data.main.temp);
+                      //const fl = data.main.feels_like;
+                      const tempElement = document.getElementById("temp");
+                      const cityElement = document.getElementById("city");
+                      tempElement.innerHTML = `${temp}°F`;
+                      cityElement.innerHTML = `&lt; ${city} &gt;`;
+                  })
+                  .catch(error => console.error('Couldn\'t get info from openweather:', error))
+          })
+          .catch(error => console.error('oops! no geolocation: ', error))
+      })
+      .catch(error => console.error('Couldn\'t load config.json:', error))
+}
+
+// update the time every 10 seconds
 function updateTime() {
   setTimeout(setTime(), 10000);
 }
-updateTime();
 
+// update the temp every 10 mins
 function updateTemp() {
+  setTimeout(setTemp(), 600000);
+}
 
-} updateTemp();
+updateTime();
+updateTemp();
 
 console.log(getJulianDay());
 console.log(getJulianCentury());
-
-//let [ay, bee] = getLatLong();
-//getLatLong2(getRiseSet);
-//getRiseSet(lat, long);
 
 /*
 the sun will be highest at the midpoint between sunset and sunrise,

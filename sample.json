@@ -1,0 +1,47 @@
+{
+    "openweather": {
+        "coord": {
+            "lon": -82.3873,
+            "lat": 29.6132
+        },
+        "weather": [
+            {
+            "id": 800,
+            "main": "Clear",
+            "description": "clear sky",
+            "icon": "01n"
+            }
+        ],
+        "base": "stations",
+        "main": {
+            "temp": 66.06,
+            "feels_like": 65.61,
+            "temp_min": 65.03,
+            "temp_max": 67.28,
+            "pressure": 1022,
+            "humidity": 69,
+            "sea_level": 1022,
+            "grnd_level": 1018
+        },
+        "visibility": 10000,
+        "wind": {
+            "speed": 0,
+            "deg": 0
+        },
+        "clouds": {
+            "all": 0
+        },
+        "dt": 1738633017,
+        "sys": {
+            "type": 2,
+            "id": 2008442,
+            "country": "US",
+            "sunrise": 1738585072,
+            "sunset": 1738624134
+        },
+        "timezone": -18000,
+        "id": 4156404,
+        "name": "Gainesville",
+        "cod": 200
+    }
+}
