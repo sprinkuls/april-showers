@@ -195,6 +195,9 @@ function setTemp() {
           .then(data => {
               lat = data.lat;
               lon = data.lon;
+
+              lat = 61.21;
+              lon = -149.86;
               // now we use these values in a call to openweather
               ////const request = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweather}&units=imperial`;
               ////for now, use this sample response to not send tons of reqs to openweather
@@ -206,13 +209,13 @@ function setTemp() {
                     console.log(data);
                     // process JSON returned by openweather
                     // https://openweathermap.org/api/one-call-api
-                      const city = data.name;
+                      const city = data.name.toLowerCase();
                       const temp = Math.round(data.main.temp);
-                      //const fl = data.main.feels_like;
+                      ////const fl = data.main.feels_like;
                       const tempElement = document.getElementById("temp");
                       const cityElement = document.getElementById("city");
                       tempElement.innerHTML = `${temp}°F`;
-                      cityElement.innerHTML = `&lt; ${city} &gt;`;
+                      cityElement.innerHTML = `${city}`;
                   })
                   .catch(error => console.error('Couldn\'t get info from openweather:', error))
           })
@@ -231,11 +234,43 @@ function updateTemp() {
   setTimeout(setTemp(), 600000);
 }
 
-updateTime();
+/*
+store what colors we want for things like sunset, sunrise, midday, midnight
+*/
+// so is const more like just saying that 'this thing will always be this type' ?
+// like, its value won't change, which sounds like how const is in other languages,
+// but you're still able to use setters and stuff, so it's more like 'const x will
+// always be a map' or something like that rather than 'const x will always have these
+// special values in it' c'est la weak typing
+const colorMap = new Map();
+colorMap.set('sunset', '#ff30bb');
+colorMap.set('bluehour', '#3d518c');
+colorMap.set('midnight', '#262626');
+colorMap.set('sunrise', '#ff5900');
+colorMap.set('noon', '#7bc3ff');
+colorMap.set('evil', [255, 0, 0]);
+
+function updateColors() {
+  let color = colorMap.get('evil')
+  console.log();
+  let newcolor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  if (true)
+    document.getElementById("city").style.color = newcolor;
+}
+
+setTemp();
+//updateTime();
 updateTemp();
+
+updateColors();
 
 console.log(getJulianDay());
 console.log(getJulianCentury());
+
+// mess with stuff heeheheheheheh
+document.body.style.background = '#dfd6c9';
+let citystuff = document.getElementById("city");
+//citystuff.style.color = "#fff";
 
 /*
 the sun will be highest at the midpoint between sunset and sunrise,

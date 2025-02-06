@@ -16,9 +16,15 @@ body {
     border-radius: 0.5em;
 }
 
+#cityline {
+    text-align: center;
+    color: #3e7989;
+    font-size: 1.5em;
+}
+
 #city {
     text-align: center;
-    font-size: 1.5em;
+    color:#2e5979;
     margin: 0;
 }
 
