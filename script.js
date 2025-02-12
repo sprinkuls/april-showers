@@ -1,124 +1,4 @@
-console.log("uhhhh i'm smokin ibm quantum computer")
-
-function getLatLong() {
-  let lat, long;
-  fetch ('http://ip-api.com/json')
-    .then((response) => response.json())
-    .then(data => {
-      lat = data.lat;
-      long = data.lon;
-      console.log('B');
-      console.log(lat, long);
-    }).catch(error => console.error('oops! no geolocation: ', error))
-    return [lat, long];
-}
-
-// returns [sunrisetime, sunsettime]
-// it also doesn't work!
-function getRiseSetBAD(lat, long) {
-  //TODO: change this back to ``new Date(Date.now());``
-    //let x = new Date('March 24, 2017');
-    let x = new Date(Date.now());
-    let month = x.getMonth() + 1; // zero indexed kill yourself this isn't C
-    let year = x.getFullYear();
-    let day = x.getDate();
-    let tzOffset = x.getTimezoneOffset() / 60;
-
-    console.log(day, month, year);
-
-  // shamelessly stolen from
-  // https://edwilliams.org/sunrise_sunset_algorithm.htm
-  // (which itself is taken from a 1990 almanac)
-
-  // 1. first calculate the day of the year
-  let N1 = Math.floor(275 * (month) / 9);
-  let N2 = Math.floor((month + 9) / 12);
-  let N3 = (1 + Math.floor((year - 4 * Math.floor(year / 4) + 2) /3 ));
-  let N = N1 - (N2 * N3) + day - 30;
-
-  console.log(N);
-  // 2. convert the longitude to hour value and calculate an approximate time
-  let lngHour = long / 15;
-  console.log(lngHour);
-  let riseT = N + ((6  - lngHour) / 24);
-  let setT  = N + ((18 - lngHour) / 24);
-  console.log("2. ", riseT, setT);
-
-  // 3. calculate the Sun's mean anomaly
-  let riseM = (0.9856 * riseT) - 3.289;
-  let setM  = (0.9856 * setT) - 3.289;
-
-  // 'in radians' i will hurt you. rc = radian conversion
-  let rc = Math.PI/180;
-
-  // 4. calculate the Sun's true longitude
-  let riseL = riseM + (1.916 * Math.sin(rc*riseM)) + (0.02 * Math.sin(rc * 2 * riseM)) + 282.634;
-  let setL = setM + (1.916 * Math.sin(rc*setM)) + (0.02 * Math.sin(rc * 2 * setM)) + 282.634;
-  console.log("L: ", riseL, setL);
-
-  // 5a. calculate the Sun's right ascension
-  let riseRA = Math.atan(rc * 0.91764 * Math.tan(rc * riseL));
-  let setRA = Math.atan(rc * 0.91764 * Math.tan(rc * setL));
-  console.log("RA: ", riseRA, setRA);
-
-  // 5b. right ascension value needs to be in the same quadrant as L
-  let riseLquadrant = (Math.floor(riseL / 90)) * 90;
-  let riseRAquadrant = (Math.floor(riseRA / 90)) * 90;
-  riseRA = riseRA + (riseLquadrant - riseRAquadrant);
-
-  let setLquadrant = (Math.floor(setL / 90)) * 90;
-  let setRAquadrant = (Math.floor(setRA / 90)) * 90;
-  setRA = setRA + (setLquadrant - setRAquadrant);
-
-  // 5c. right ascension value needs to be converted into hours
-  riseRA = riseRA / 15;
-  setRA = setRA / 15;
-
-  // 6. calculate the Sun's declination
-  let riseSinDec = 0.39782 * Math.sin(rc * riseL);
-  let riseCosDec = 0.39782 * Math.cos(rc * riseL);
-
-  let setSinDec = 0.39782 * Math.sin(rc * setL);
-  let setCosDec = 0.39782 * Math.cos(rc * setL);
-
-  // 7a. calculate the Sun's local hour angle
-  //	zenith:                Sun's zenith for sunrise/sunset
-	//    offical      = 90 degrees 50'
-	//    civil        = 96 degrees
-	//    nautical     = 102 degrees
-	//    astronomical = 108 degrees
-  // i'm sure 'civil' is fine.
-  const zenith = 96;
-
-  let riseCosH = (Math.cos(rc * zenith) - (riseSinDec * Math.sin(rc * lat))) / (riseCosDec * Math.cos(rc * lat));
-  let setCosH = (Math.cos(rc * zenith) - (setSinDec * Math.sin(rc * lat))) / (setCosDec * Math.cos(rc * lat));
-
-  console.log(riseCosH); // just a REALLY basic and poor sanity check
-  // TODO: Do something with this information.
-  //	if (cosH >  1)
-	//    the sun never rises on this location (on the specified date)
-	//  if (cosH < -1)
-	//    the sun never sets on this location (on the specified date)
-
-  // 7b. finish calculating H and convert into hours
-  let riseH = (360 - Math.acos(rc * riseCosH)) / 15;
-  let setH =  (Math.acos(rc * setCosH)) / 15;
-
-  // 8. calculate local mean time of rising/setting
-  let riseTime = riseH + riseRA - (0.06571 * riseT) - 6.622;
-  let setTime = setH + setRA - (0.06571 * setT) - 6.622;
-  console.log(riseTime, setTime);
-  // 9. adjust back to UTC
-  let riseUT = riseTime - lngHour;
-  let setUT = setTime - lngHour;
-  // NOTE: UT potentially needs to be adjusted into the range [0,24) by adding/subtracting 24
-  // TOOD: ^ implement this check
-  console.log("rise, set in UTC", riseUT, setUT);
-
-  // 10. convert UT value to local time zone of latitude/longitude
-  return[riseUT + tzOffset, setUT + tzOffset];
-}
-
+console.log("i'm smokin ibm quantum computer");
 
 /*
 so we're always going to be in some day
@@ -154,10 +34,6 @@ function getRiseSet(lat, long) {
   var julianCentury = getJulianCentury();
 }
 
-// we should really just use unix timestamps, right?
-// time is fucked up
-let sunrise = 6;
-
 // i want this to use the other stuff we've calculated to set the right bg color
 function getBackgroundColor() {
   // i guess we should, before writing all the code for finding sunrise/sunset
@@ -171,15 +47,15 @@ function setTime() {
   let hrs = date.getHours();
   if (hrs == 0) {
     hrs = 12;
-    mins += ' AM';
+    mins += ' am';
   } else if (hrs > 12) {
     hrs = hrs - 12;
-    mins += ' PM';
+    mins += ' pm';
   } else {
-    mins += ' AM';
+    mins += ' am';
   }
   console.log(date, hrs, mins);
-  element.innerHTML = `${hrs}:${mins}`;
+  element.innerHTML = `it's ${hrs}:${mins}.`;
 }
 
 function setTemp() {
@@ -214,7 +90,7 @@ function setTemp() {
                       ////const fl = data.main.feels_like;
                       const tempElement = document.getElementById("temp");
                       const cityElement = document.getElementById("city");
-                      tempElement.innerHTML = `${temp}°F`;
+                      tempElement.innerHTML = `${temp}°F out.`;
                       cityElement.innerHTML = `${city}`;
                   })
                   .catch(error => console.error('Couldn\'t get info from openweather:', error))
@@ -242,38 +118,96 @@ store what colors we want for things like sunset, sunrise, midday, midnight
 // but you're still able to use setters and stuff, so it's more like 'const x will
 // always be a map' or something like that rather than 'const x will always have these
 // special values in it' c'est la weak typing
+
+/*
+these are really just different stops of a gradient, based on the times of
+certain events
+*/
 const colorMap = new Map();
-colorMap.set('sunset', '#ff30bb');
-colorMap.set('bluehour', '#3d518c');
-colorMap.set('midnight', '#262626');
-colorMap.set('sunrise', '#ff5900');
-colorMap.set('noon', '#7bc3ff');
-colorMap.set('evil', [255, 0, 0]);
+colorMap.set('sunset',      [255, 48, 187]);
+colorMap.set('bluehour',    [44, 48, 84]);
+colorMap.set('midnight',    [38, 38, 38]);
+colorMap.set('sunrise',     [255, 89, 0]);
+colorMap.set('noon',        [123, 195, 255]);
+colorMap.set('evil',        [255, 0, 0]);
+colorMap.set('benevolent',  [123, 195, 255]);
+
+// like the color map, but maps different named times to actual unix times
+// these are fixed times so my development isn't reliant on the literal time of day
+
+// these need to be circular, since every day follows basically the same loop
+// i think i had a good idea before; check what the current unix timestamp is, then,
+// any times before it (besides the last one since we're fading from it) get swapped
+// for tomorrow's times.
+
+const timeMap = new Map();
+timeMap.set('sunset', 1738883460000);
+let newdate = new Date(1738862443000);
+console.log(newdate.toDateString());
 
 function updateColors() {
-  let color = colorMap.get('evil')
-  console.log();
-  let newcolor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+  let color1 = colorMap.get('noon');
+  let color2 = colorMap.get('sunset');
+
+  // say, 30% past the first value. this means 30% the second, 70% the first
+  // TODO: calculate this from time of day relative to
+  let progress = 0.2;
+  let red, green, blue;
+  red = (progress * color2[0]) + ((1-progress)*color1[0]);
+  green = (progress * color2[1]) + ((1-progress)*color1[1]);
+  blue = (progress * color2[2]) + ((1-progress)*color1[2]);
+
+  let newcolor = `rgb(${red}, ${green}, ${blue})`;
+  console.log('aswedrf');
+  document.body.style.background = newcolor;
+  /*
   if (true)
     document.getElementById("city").style.color = newcolor;
+  */
 }
 
 setTemp();
-//updateTime();
+updateTime();
 updateTemp();
 
-updateColors();
 
 console.log(getJulianDay());
 console.log(getJulianCentury());
 
-// mess with stuff heeheheheheheh
-document.body.style.background = '#dfd6c9';
+//document.body.style.background = '#dfd6c9';
 let citystuff = document.getElementById("city");
+updateColors();
+
 //citystuff.style.color = "#fff";
+//document.body.style.background = 'rgb(123, 195, 255)';
+//document.body.style.color = '#fff';
 
 /*
 the sun will be highest at the midpoint between sunset and sunrise,
 and simultaneously at its lowest at the other midpoint, no?
 use these facts to assign points of transition.
+*/
+
+/*
+ * i think that this should be structured like
+ * 1. all the function defs at the top of the file (of course)
+ * 2. a call to some 'init()' function that
+ *   1. calcs sun rise/set times
+ *   2. populates the color/time maps
+ *     - this would get done based off of the rise/set times, so that
+ *       part of course needs to get done first.
+ * 3. calls the updateTemp(); and updateTime(); functions
+ *
+ *
+ * i'm first going to figure out how to get the background color set
+ * correctly, since that's the
+ *
+*/
+/*
+ * ok just had an idea. do things dually as a gradient between color,
+ * and between alpha values. like, at night it doesn't make sense for
+ * any color to be shining through the window, and the same at midday; it's just
+ * white light coming through, but more brightly than at any other point. but
+ * once it gets to, say, sunset, we can have golden light stream in that's also less
+ * bright than midday sunshine. BANG
 */

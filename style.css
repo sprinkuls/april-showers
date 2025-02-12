@@ -1,7 +1,13 @@
 body {
     background-color: #dfd6c9;
     color: #3e7989;
+    padding-left: 7em;
+    padding-top: 1em;
     /* color: #fff6e9; background-color: #6e8999; */
+}
+
+#highlow {
+    color: #fff;
 }
 
 #title {
@@ -34,14 +40,10 @@ body {
     font-size: xx-large;
 }
 
-#time {
-    font-size: 1.5em;
+#timetemp {
+    font-size: 3.0em;
     color: #2e5979;
-}
 
-#temp {
-    font-size: 1.5em;
-    color: #2e5979;
 }
 
 /**********/
