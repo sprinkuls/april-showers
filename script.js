@@ -1,5 +1,41 @@
 console.log("i'm smokin ibm quantum computer");
+/********** variables that need to be used by the rest of the program **********/
+// TODO: think about if this should all be condensed into one map
+// TODO: also learn how objects work in JS (it seems like I just need to use JSON)
+//       resources for such:
+//         https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer
+//         https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Working_with_objects
+//         https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON
+//       I think part of my confusion was that I'm used to C-style stuff with structs, rather than just lists of properties
+//       and values. Maybe I should make a factory function for these?
+//         https://www.theodinproject.com/lessons/node-path-javascript-factory-functions-and-the-module-pattern
 
+// TODO: i wonder if there's some way to, instead of just using more stops, define some sort of function to 
+//       describe the change in color from t1 to t2. like, define the 'progress' or weighting of one to the other
+//       based on the distance. that way we could just define colors and functions, rather than stops?
+//       might be needlessly complex, but worth looking in to.
+
+const theMap = new Map();
+// a day is 24hrs * 60mins * 60secs * 1000ms long in UNIX millis (86,400,000)
+theMap.set('midnight', {
+  'r': 0,
+  'g': 0,
+  'b': 0,
+  'a': 0.0,
+  'time': 0, // this is the UNIX timestamp that this stop occurs at 
+  'nextstop': 'sunrise' // what the next stop is
+});
+
+theMap.set('sunset', {
+  'r': 255,
+  'g': 255,
+  'b': 255,
+  'a': 1.0,
+  'time': 66400000 // this is the UNIX timestamp that this stop occurs at 
+});
+
+
+/********** functions and etc **********/
 /*
 so we're always going to be in some day
 i think the way we should do things is
@@ -15,6 +51,7 @@ cases:
       then say 'sunrise was at x:am; sunset is at y:pm'
 */
 
+/***** stuff specifically for calculating sunrise/sunset time *****/
 // the unix epoch occured on julian day 2440587.5
 // use the current unix time (from Date.now()) to find the number of days since then
 // (the division converts ms to days)
@@ -29,7 +66,8 @@ function getJulianCentury() {
   return ((julianDay - 2451545) / 36525);
 }
 
-//  implementation taken from https://gml.noaa.gov/grad/solcalc/calcdetails.html
+// implementation taken from https://gml.noaa.gov/grad/solcalc/calcdetails.html (from the spreadsheets)
+// which itself credits the book "Astronomical Algorithms" by Jean Meeus
 function getRiseSet(lat, long) {
   var julianCentury = getJulianCentury();
 }
@@ -123,6 +161,9 @@ store what colors we want for things like sunset, sunrise, midday, midnight
 these are really just different stops of a gradient, based on the times of
 certain events
 */
+// TODO: fundamental change here; don't make these the color of the sky, but
+//       rather the color of light that might shine in through a window
+// TODO: add alpha values
 const colorMap = new Map();
 colorMap.set('sunset',      [255, 48, 187]);
 colorMap.set('bluehour',    [44, 48, 84]);
@@ -149,8 +190,10 @@ function updateColors() {
   let color1 = colorMap.get('noon');
   let color2 = colorMap.get('sunset');
 
+  color1 = theMap.get('midnight');
+
   // say, 30% past the first value. this means 30% the second, 70% the first
-  // TODO: calculate this from time of day relative to
+  // TODO: calculate this the difference in timestamps.
   let progress = 0.2;
   let red, green, blue;
   red = (progress * color2[0]) + ((1-progress)*color1[0]);
@@ -165,6 +208,8 @@ function updateColors() {
     document.getElementById("city").style.color = newcolor;
   */
 }
+
+/********** where code actually runs **********/
 
 setTemp();
 updateTime();
