@@ -1,3 +1,5 @@
+"use strict";
+
 console.log("i'm smokin ibm quantum computer");
 /********** variables that need to be used by the rest of the program **********/
 // TODO: think about if this should all be condensed into one map
@@ -10,7 +12,7 @@ console.log("i'm smokin ibm quantum computer");
 //       and values. Maybe I should make a factory function for these?
 //         https://www.theodinproject.com/lessons/node-path-javascript-factory-functions-and-the-module-pattern
 
-// TODO: i wonder if there's some way to, instead of just using more stops, define some sort of function to 
+// TODO: i wonder if there's some way to, instead of just using more stops, define some sort of function to
 //       describe the change in color from t1 to t2. like, define the 'progress' or weighting of one to the other
 //       based on the distance. that way we could just define colors and functions, rather than stops?
 //       might be needlessly complex, but worth looking in to.
@@ -22,7 +24,7 @@ theMap.set('midnight', {
   'g': 0,
   'b': 0,
   'a': 0.0,
-  'time': 0, // this is the UNIX timestamp that this stop occurs at 
+  'time': 0, // this is the UNIX timestamp that this stop occurs at
   'nextstop': 'sunrise' // what the next stop is
 });
 
@@ -31,7 +33,7 @@ theMap.set('sunset', {
   'g': 255,
   'b': 255,
   'a': 1.0,
-  'time': 66400000 // this is the UNIX timestamp that this stop occurs at 
+  'time': 66400000 // this is the UNIX timestamp that this stop occurs at
 });
 
 
@@ -62,14 +64,105 @@ function getJulianDay() {
 // based on the start of the 21st century (2451545th julian day)
 // and how far through the century we are.
 function getJulianCentury() {
-  var julianDay = 2440587.5 + (Date.now() / (86400000));
+  let julianDay = 2440587.5 + (Date.now() / (86400000));
   return ((julianDay - 2451545) / 36525);
 }
 
 // implementation taken from https://gml.noaa.gov/grad/solcalc/calcdetails.html (from the spreadsheets)
 // which itself credits the book "Astronomical Algorithms" by Jean Meeus
 function getRiseSet(lat, long) {
-  var julianCentury = getJulianCentury();
+  console.log(lat, long);
+  // convenience
+  let RAD = Math.PI/180;
+  let DEG = 180/Math.PI;
+
+  let sin = Math.sin;
+  let cos = Math.cos;
+  let tan = Math.tan;
+
+  let asin = Math.asin;
+  let acos = Math.acos;
+
+  let JC = getJulianCentury();
+  console.log("julianCentury", JC);
+
+  let geomMeanLongSun = (280.46646+JC*(36000.76983+JC*0.0003032)) % 360;
+  console.log("geomMeanLongSun", geomMeanLongSun);
+
+  let geomMeanAnomSun = 357.52911+JC*(35999.05029-0.0001537*JC);
+  console.log("geomMeanAnomSun", geomMeanAnomSun);
+
+  let eccentEarthOrbit = 0.016708634-JC*(0.000042037+0.0000001267*JC);
+  console.log("eccentEarthOrbit", eccentEarthOrbit);
+
+  let sunEqOfCtr = sin(RAD*geomMeanAnomSun)*(1.914602-JC*(0.004817+0.000014*JC))+sin(RAD*2*geomMeanAnomSun)*(0.019993-0.000101*JC)+sin(RAD*3*geomMeanAnomSun)*0.000289;
+  console.log("sunEqOfCtr", sunEqOfCtr);
+
+  let sunTrueLong = geomMeanLongSun+sunEqOfCtr;
+  console.log("sunTrueLong", sunTrueLong);
+
+  let sunAppLong = sunTrueLong-0.00569-0.00478*sin(RAD*(125.04-1934.136*JC));
+  console.log("sunAppLong", sunAppLong);
+
+  let meanObliqEcliptic = 23+(26+((21.448-JC*(46.815+JC*(0.00059-JC*0.001813))))/60)/60;
+  console.log("meanObliqEcliptic", meanObliqEcliptic);
+
+  let obliqCorr = meanObliqEcliptic+0.00256*cos(RAD*125.04-1934.136*JC);
+  console.log("obliqCorr", obliqCorr);
+
+  let sunDeclin = DEG*(asin(sin(RAD*obliqCorr)*sin(RAD*sunAppLong)));
+  console.log("sunDeclin", sunDeclin);
+
+  let HAsunrise = DEG*(acos(cos(RAD*90.833)/(cos(RAD*lat)*cos(RAD*(sunDeclin)))-tan(RAD*(lat))*tan(RAD*(sunDeclin))));
+  console.log("HAsunrise", HAsunrise);
+
+  let varY = tan(RAD*(obliqCorr/2))*tan(RAD*(obliqCorr/2));
+  console.log("varY", varY);
+
+  // insane equation
+  let eqOfTime = 4*DEG*(varY*sin(2*RAD*(geomMeanLongSun))-2*eccentEarthOrbit*sin(RAD*(geomMeanAnomSun))+
+                 4*eccentEarthOrbit*varY*sin(RAD*(geomMeanAnomSun))*cos(2*RAD*(geomMeanLongSun))-0.5*
+                 varY*varY*sin(4*RAD*(geomMeanLongSun))-1.25*eccentEarthOrbit*eccentEarthOrbit*sin(2*RAD*(geomMeanAnomSun)));
+  console.log("eqOfTime", eqOfTime);
+
+  // divide by 60 since offset is given in minutes
+  // multiply by -1 because this gives GMT - ${your time zone}
+  let tzOffset = -(new Date()).getTimezoneOffset() / 60;
+  console.log("tzOffset", tzOffset);
+
+  let solarNoon = (720-4*long-eqOfTime+tzOffset*60)/1440;
+  console.log("solarNoon", solarNoon);
+  // this is basically the % progression through the day; a value of 0.5
+  // means that solar noon is exactly at normal noon (12:00)
+  // # of mins = 60 * 24
+  // # of mins through the day
+  let mins = solarNoon * (60 * 24);
+  let hrs = Math.floor(mins/60);
+  mins = Math.floor(mins % 60);
+  console.log("solar noon", hrs, mins);
+
+  // how much the sunrise/sunset are offset from solar noon
+  let solarOffset = HAsunrise*4/1440;
+  let rise = solarNoon - solarOffset;
+  let set = solarNoon + solarOffset;
+
+  let today = new Date();
+  console.log("now: ", today.toString());
+  today.setHours(0,0,0,0);
+
+  let zzz = 86400000 * rise;
+  let yyy = 86400000 * solarNoon;
+  let xxx = 86400000 * set;
+
+  let riseToday = (today.valueOf() + zzz);
+  let noonToday = (today.valueOf() + yyy);
+  let setToday = (today.valueOf() + xxx);
+
+  return [riseToday, noonToday, setToday];
+}
+// convert some unix timestamp to HH:MM am/pm format
+function UNIXtoHHMM(timestamp) {
+
 }
 
 // i want this to use the other stuff we've calculated to set the right bg color
@@ -96,6 +189,7 @@ function setTime() {
   element.innerHTML = `it's ${hrs}:${mins}.`;
 }
 
+/*
 function setTemp() {
   // get keys from me secrets file (since this size project doesn't warrant/need a backend)
   fetch('config.json')
@@ -137,6 +231,7 @@ function setTemp() {
       })
       .catch(error => console.error('Couldn\'t load config.json:', error))
 }
+*/
 
 // update the time every 10 seconds
 function updateTime() {
@@ -184,7 +279,6 @@ colorMap.set('benevolent',  [123, 195, 255]);
 const timeMap = new Map();
 timeMap.set('sunset', 1738883460000);
 let newdate = new Date(1738862443000);
-console.log(newdate.toDateString());
 
 function updateColors() {
   let color1 = colorMap.get('noon');
@@ -209,13 +303,52 @@ function updateColors() {
   */
 }
 
-/********** where code actually runs **********/
+//returns a JSON response from openweather
+async function updateOW(request) {
+  let response = await fetch(request);
+  return response.json();
+}
 
+//returns the latitude/longitude
+async function getLatLon() {
+  let response = await fetch('http://ip-api.com/json');
+  let json = await response.json();
+  return([json.lat, json.lon]);
+}
+
+//////////////////// where code executes ////////////////////
+
+// blue
+updateTime();
+
+// paint the town red
+(async () => {
+  const [lat, lon] = await getLatLon();
+
+  // now that we have the lat/lon, there are really two different branches
+  // that make up this program:
+  // 1. most of the program (calc rise/set times, do colors, etc)
+  // 2. just get the weather (relatively small part, set h/l and current temp)
+  // both rely on the result of the lat/lon call, so no matter what everything needs to
+  // wait for the result of that call.
+  getRiseSet(lat, lon);
+
+  // if there's a real API key given, make a real request; otherwise, use the sample response
+  let req, openweatherkey = 'API_KEY';
+  if (openweatherkey == 'API_KEY')
+    req = 'openweather.json';
+  else
+    req = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweatherkey}&units=imperial`;
+
+  // we kinda have to await the response of this because, like, what else are we gonna do?
+  let owResponse = await updateOW(req);
+  console.log("red: ", owResponse.main.temp);
+})();
+
+/*
 setTemp();
 updateTime();
 updateTemp();
-
-
 console.log(getJulianDay());
 console.log(getJulianCentury());
 
