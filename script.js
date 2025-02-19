@@ -57,21 +57,23 @@ cases:
 // the unix epoch occured on julian day 2440587.5
 // use the current unix time (from Date.now()) to find the number of days since then
 // (the division converts ms to days)
-function getJulianDay() {
-  return 2440587.5 + (Date.now() / (86400000));
+// offset is the number of days from today (1 = tomorrow, -1 = yesterday, etc)
+function getJulianDay(offset=0) {
+  return 2440587.5 + ((Date.now()+(offset*86400000)) / (86400000));
 }
 
 // based on the start of the 21st century (2451545th julian day)
 // and how far through the century we are.
-function getJulianCentury() {
-  let julianDay = 2440587.5 + (Date.now() / (86400000));
+// offset is the number of days from today (1 = tomorrow, -1 = yesterday, etc)
+function getJulianCentury(offset=0) {
+  let julianDay = getJulianDay(offset);
   return ((julianDay - 2451545) / 36525);
 }
 
 // implementation taken from https://gml.noaa.gov/grad/solcalc/calcdetails.html (from the spreadsheets)
 // which itself credits the book "Astronomical Algorithms" by Jean Meeus
-function getRiseSet(lat, long) {
-  console.log(lat, long);
+function getRiseSet(lat, long, offset=0) {
+  //console.log(lat, long);
   // convenience
   let RAD = Math.PI/180;
   let DEG = 180/Math.PI;
@@ -84,54 +86,54 @@ function getRiseSet(lat, long) {
   let acos = Math.acos;
 
   let JC = getJulianCentury();
-  console.log("julianCentury", JC);
+  //console.log("julianCentury", JC);
 
   let geomMeanLongSun = (280.46646+JC*(36000.76983+JC*0.0003032)) % 360;
-  console.log("geomMeanLongSun", geomMeanLongSun);
+  //console.log("geomMeanLongSun", geomMeanLongSun);
 
   let geomMeanAnomSun = 357.52911+JC*(35999.05029-0.0001537*JC);
-  console.log("geomMeanAnomSun", geomMeanAnomSun);
+  //console.log("geomMeanAnomSun", geomMeanAnomSun);
 
   let eccentEarthOrbit = 0.016708634-JC*(0.000042037+0.0000001267*JC);
-  console.log("eccentEarthOrbit", eccentEarthOrbit);
+  //console.log("eccentEarthOrbit", eccentEarthOrbit);
 
   let sunEqOfCtr = sin(RAD*geomMeanAnomSun)*(1.914602-JC*(0.004817+0.000014*JC))+sin(RAD*2*geomMeanAnomSun)*(0.019993-0.000101*JC)+sin(RAD*3*geomMeanAnomSun)*0.000289;
-  console.log("sunEqOfCtr", sunEqOfCtr);
+  //console.log("sunEqOfCtr", sunEqOfCtr);
 
   let sunTrueLong = geomMeanLongSun+sunEqOfCtr;
-  console.log("sunTrueLong", sunTrueLong);
+  //console.log("sunTrueLong", sunTrueLong);
 
   let sunAppLong = sunTrueLong-0.00569-0.00478*sin(RAD*(125.04-1934.136*JC));
-  console.log("sunAppLong", sunAppLong);
+  //console.log("sunAppLong", sunAppLong);
 
   let meanObliqEcliptic = 23+(26+((21.448-JC*(46.815+JC*(0.00059-JC*0.001813))))/60)/60;
-  console.log("meanObliqEcliptic", meanObliqEcliptic);
+  //console.log("meanObliqEcliptic", meanObliqEcliptic);
 
   let obliqCorr = meanObliqEcliptic+0.00256*cos(RAD*125.04-1934.136*JC);
-  console.log("obliqCorr", obliqCorr);
+  //console.log("obliqCorr", obliqCorr);
 
   let sunDeclin = DEG*(asin(sin(RAD*obliqCorr)*sin(RAD*sunAppLong)));
-  console.log("sunDeclin", sunDeclin);
+  //console.log("sunDeclin", sunDeclin);
 
   let HAsunrise = DEG*(acos(cos(RAD*90.833)/(cos(RAD*lat)*cos(RAD*(sunDeclin)))-tan(RAD*(lat))*tan(RAD*(sunDeclin))));
-  console.log("HAsunrise", HAsunrise);
+  //console.log("HAsunrise", HAsunrise);
 
   let varY = tan(RAD*(obliqCorr/2))*tan(RAD*(obliqCorr/2));
-  console.log("varY", varY);
+  //console.log("varY", varY);
 
   // insane equation
   let eqOfTime = 4*DEG*(varY*sin(2*RAD*(geomMeanLongSun))-2*eccentEarthOrbit*sin(RAD*(geomMeanAnomSun))+
                  4*eccentEarthOrbit*varY*sin(RAD*(geomMeanAnomSun))*cos(2*RAD*(geomMeanLongSun))-0.5*
                  varY*varY*sin(4*RAD*(geomMeanLongSun))-1.25*eccentEarthOrbit*eccentEarthOrbit*sin(2*RAD*(geomMeanAnomSun)));
-  console.log("eqOfTime", eqOfTime);
+  //console.log("eqOfTime", eqOfTime);
 
   // divide by 60 since offset is given in minutes
   // multiply by -1 because this gives GMT - ${your time zone}
   let tzOffset = -(new Date()).getTimezoneOffset() / 60;
-  console.log("tzOffset", tzOffset);
+  //console.log("tzOffset", tzOffset);
 
   let solarNoon = (720-4*long-eqOfTime+tzOffset*60)/1440;
-  console.log("solarNoon", solarNoon);
+  //console.log("solarNoon", solarNoon);
   // this is basically the % progression through the day; a value of 0.5
   // means that solar noon is exactly at normal noon (12:00)
   // # of mins = 60 * 24
@@ -139,7 +141,7 @@ function getRiseSet(lat, long) {
   let mins = solarNoon * (60 * 24);
   let hrs = Math.floor(mins/60);
   mins = Math.floor(mins % 60);
-  console.log("solar noon", hrs, mins);
+  //console.log("solar noon", hrs, mins);
 
   // how much the sunrise/sunset are offset from solar noon
   let solarOffset = HAsunrise*4/1440;
@@ -147,18 +149,18 @@ function getRiseSet(lat, long) {
   let set = solarNoon + solarOffset;
 
   let today = new Date();
-  console.log("now: ", today.toString());
+  //console.log("now: ", today.toString());
   today.setHours(0,0,0,0);
 
   let zzz = 86400000 * rise;
   let yyy = 86400000 * solarNoon;
   let xxx = 86400000 * set;
 
-  let riseToday = (today.valueOf() + zzz);
-  let noonToday = (today.valueOf() + yyy);
-  let setToday = (today.valueOf() + xxx);
+  let riseTime = (today.valueOf() + zzz);
+  let noonTime = (today.valueOf() + yyy);
+  let setTime = (today.valueOf() + xxx);
 
-  return [riseToday, noonToday, setToday];
+  return [riseTime, noonTime, setTime];
 }
 // convert some unix timestamp to HH:MM am/pm format
 function UNIXtoHHMM(timestamp) {
@@ -185,53 +187,9 @@ function setTime() {
   } else {
     mins += ' am';
   }
-  console.log(date, hrs, mins);
+  //console.log(date, hrs, mins);
   element.innerHTML = `it's ${hrs}:${mins}.`;
 }
-
-/*
-function setTemp() {
-  // get keys from me secrets file (since this size project doesn't warrant/need a backend)
-  fetch('config.json')
-      .then((response) => response.json())
-      .then(data => {
-          const openweather = data.openweather;
-      // get location from IP (could also be done with geolocation api)
-      // https://ip-api.com/
-      fetch ('http://ip-api.com/json')
-          .then((response) => response.json())
-          .then(data => {
-              lat = data.lat;
-              lon = data.lon;
-
-              lat = 61.21;
-              lon = -149.86;
-              // now we use these values in a call to openweather
-              ////const request = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweather}&units=imperial`;
-              ////for now, use this sample response to not send tons of reqs to openweather
-              const request = 'sample.json'
-              fetch(request)
-                  .then((response) => response.json())
-                  .then((data) => {
-                    data = data.openweather;
-                    console.log(data);
-                    // process JSON returned by openweather
-                    // https://openweathermap.org/api/one-call-api
-                      const city = data.name.toLowerCase();
-                      const temp = Math.round(data.main.temp);
-                      ////const fl = data.main.feels_like;
-                      const tempElement = document.getElementById("temp");
-                      const cityElement = document.getElementById("city");
-                      tempElement.innerHTML = `${temp}°F out.`;
-                      cityElement.innerHTML = `${city}`;
-                  })
-                  .catch(error => console.error('Couldn\'t get info from openweather:', error))
-          })
-          .catch(error => console.error('oops! no geolocation: ', error))
-      })
-      .catch(error => console.error('Couldn\'t load config.json:', error))
-}
-*/
 
 // update the time every 10 seconds
 function updateTime() {
@@ -342,7 +300,7 @@ updateTime();
 
   // we kinda have to await the response of this because, like, what else are we gonna do?
   let owResponse = await updateOW(req);
-  console.log("red: ", owResponse.main.temp);
+  console.log("temperature: ", owResponse.main.temp);
 })();
 
 /*
