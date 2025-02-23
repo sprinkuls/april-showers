@@ -289,18 +289,30 @@ updateTime();
   // 2. just get the weather (relatively small part, set h/l and current temp)
   // both rely on the result of the lat/lon call, so no matter what everything needs to
   // wait for the result of that call.
-  getRiseSet(lat, lon);
+  const [rise, noon, set] = getRiseSet(lat, lon);
+
+  //TODO: make these not the unix timestamp
+  document.getElementById("solar").innerHTML = `${rise} ${set}`;
 
   // if there's a real API key given, make a real request; otherwise, use the sample response
-  let req, openweatherkey = 'API_KEY';
-  if (openweatherkey == 'API_KEY')
+  let req, openweatherkey;
+  openweatherkey = await fetch('keys.json');
+  openweatherkey = await openweatherkey.json();
+  openweatherkey = openweatherkey.openweather;
+
+  if (openweatherkey === undefined)
     req = 'openweather.json';
   else
-    req = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openweatherkey}&units=imperial`;
+    req = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${openweatherkey}&units=imperial`;
 
+    console.log(req);
   // we kinda have to await the response of this because, like, what else are we gonna do?
   let owResponse = await updateOW(req);
-  console.log("temperature: ", owResponse.main.temp);
+
+  // docs: https://openweathermap.org/api/one-call-3
+  document.getElementById("temp").innerHTML = `${Math.round(owResponse.current.temp)}° out.`;
+  //console.log(owResponse.daily[0].temp.max);
+  document.getElementById("highlow").innerHTML = `l: ${owResponse.daily[0].temp.min}; h: ${owResponse.daily[0].temp.max}`
 })();
 
 /*
