@@ -1,15 +1,17 @@
 body {
-    background-color: #dfd6c9;
-    color: #3e7989;
+    /*background-color: #dfd6c9;*/
+    font-family: 'Consolas', monospace;
+    background-color: #111;
+    background-image: url("window\ wip1.png");
+    padding-left: 5%;
+    padding-top: 1%;
+    /*color: #3e7989; */
     padding-left: 7em;
     padding-top: 1em;
-    /* color: #fff6e9; background-color: #6e8999; */
+    /* color: #fff6e9; background-color: #6e8999;*/
 }
 
-#highlow {
-    color: #fff;
-}
-
+/*
 #title {
     max-width: fit-content;
     margin-left: auto;
@@ -39,16 +41,32 @@ body {
     text-align: center;
     font-size: xx-large;
 }
+*/
 
 #timetemp {
     font-size: 3.0em;
     color: #2e5979;
-
+    color: #2c2;
+    color: #5b83db;
 }
 
-/**********/
+#highlow {
+    font-size: 1.5em;
+    color: #3e6989;
+    color: #2a2;
+    color: #5f65c5;
+}
+
+#solar {
+    font-size: 1.5em;
+    color: #4e7999;
+    color: #282;
+    color: #8c5880;
+}
+
+/**********/                 /**********/
 /********** font stuff below **********/
-/**********/
+/**********/                 /**********/
 .tegomin {
     font-family: "New Tegomin", serif;
     font-weight: 400;
@@ -63,7 +81,7 @@ body {
 
 .young-serif-regular {
     font-family: "Young Serif", serif;
-    font-weight: 400;
+    font-weight: 100;
     font-style: normal;
 }
 

@@ -1,5 +1,9 @@
 "use strict";
 
+// convenient definitions in UNIX millis
+const HOUR = 3600000;
+const DAY = 86400000;
+
 console.log("i'm smokin ibm quantum computer");
 /********** variables that need to be used by the rest of the program **********/
 // TODO: think about if this should all be condensed into one map
@@ -18,7 +22,6 @@ console.log("i'm smokin ibm quantum computer");
 //       might be needlessly complex, but worth looking in to.
 
 const theMap = new Map();
-// a day is 24hrs * 60mins * 60secs * 1000ms long in UNIX millis (86,400,000)
 theMap.set('midnight', {
   'r': 0,
   'g': 0,
@@ -59,7 +62,7 @@ cases:
 // (the division converts ms to days)
 // offset is the number of days from today (1 = tomorrow, -1 = yesterday, etc)
 function getJulianDay(offset=0) {
-  return 2440587.5 + ((Date.now()+(offset*86400000)) / (86400000));
+  return 2440587.5 + ((Date.now()+(offset*DAY)) / (DAY));
 }
 
 // based on the start of the 21st century (2451545th julian day)
@@ -152,9 +155,9 @@ function getRiseSet(lat, long, offset=0) {
   //console.log("now: ", today.toString());
   today.setHours(0,0,0,0);
 
-  let zzz = 86400000 * rise;
-  let yyy = 86400000 * solarNoon;
-  let xxx = 86400000 * set;
+  let zzz = DAY * rise;
+  let yyy = DAY * solarNoon;
+  let xxx = DAY * set;
 
   let riseTime = (today.valueOf() + zzz);
   let noonTime = (today.valueOf() + yyy);
@@ -164,7 +167,19 @@ function getRiseSet(lat, long, offset=0) {
 }
 // convert some unix timestamp to HH:MM am/pm format
 function UNIXtoHHMM(timestamp) {
-
+  const date = new Date(timestamp);
+  let mins = date.getMinutes(); if (mins < 10) mins = `0` + mins;
+  let hrs = date.getHours();
+  if (hrs == 0) {
+    hrs = 12;
+    mins += ' am';
+  } else if (hrs > 12) {
+    hrs = hrs - 12;
+    mins += ' pm';
+  } else {
+    mins += ' am';
+  }
+  return `${hrs}:${mins}`;
 }
 
 // i want this to use the other stuff we've calculated to set the right bg color
@@ -188,7 +203,7 @@ function setTime() {
     mins += ' am';
   }
   //console.log(date, hrs, mins);
-  element.innerHTML = `it's ${hrs}:${mins}.`;
+  element.innerHTML = `it's ${hrs}:${mins}`;
 }
 
 // update the time every 10 seconds
@@ -290,29 +305,73 @@ updateTime();
   // both rely on the result of the lat/lon call, so no matter what everything needs to
   // wait for the result of that call.
   const [rise, noon, set] = getRiseSet(lat, lon);
+  const [tmrwrise, tmrwnoon, tmrwset] = getRiseSet(lat, lon, 1);
 
-  //TODO: make these not the unix timestamp
-  document.getElementById("solar").innerHTML = `${rise} ${set}`;
+  // not the real time for testing :P
+  let curtime = Date.now()/*+ (4 * HOUR)*/;
+  console.log(curtime);
+
+  // night, past sunrise and an hr past sunset
+  if (curtime > rise && curtime > (set + HOUR)) {
+    document.getElementById("solar").innerHTML  = `sunset was at ${UNIXtoHHMM(set)}.`;
+    document.getElementById("solar").innerHTML += `<br>`;
+    document.getElementById("solar").innerHTML += `tmrw's sunrise is at ${UNIXtoHHMM(tmrwrise)}.`;
+
+  // midday, more than an hour past sunrise
+  } else if (curtime > (rise + HOUR)) {
+    document.getElementById("solar").innerHTML  = `sunset is at ${UNIXtoHHMM(set)}.`;
+    document.getElementById("solar").innerHTML += `<br>`;
+    document.getElementById("solar").innerHTML += `tmrw's sunrise is at ${UNIXtoHHMM(tmrwrise)}.`;
+
+  // morning, before/within an hr of sunrise
+  } else {
+    document.getElementById("solar").innerHTML  = `sunset is at ${UNIXtoHHMM(set)}.`;
+    document.getElementById("solar").innerHTML += `<br>`;
+    document.getElementById("solar").innerHTML += `sunrise is at ${UNIXtoHHMM(tmrwrise)}.`;
+  }
+
+
+  // draw some junk
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  let max = 20;
+  // why is it like this? why isn't it style.width? perplexing
+  canvas.width = max*25;
+  canvas.height = max*25;
+  for (let i = 1; i <= max; i++) {
+    for (let j = 1; j <= max; j++) {
+      let val = (255/(max * max)) * (i*j);
+      ctx.fillStyle = `rgb(${val},${val},${val})`
+      ctx.fillRect((i * 25)-25, (j * 25)-25, 25, 25);
+    }
+  }
+
+  /*
+  ctx.fillStyle = "green";
+  ctx.fillRect(10, 10, 150, 100);
+  */
+
 
   // if there's a real API key given, make a real request; otherwise, use the sample response
   let req, openweatherkey;
+  /*
   openweatherkey = await fetch('keys.json');
   openweatherkey = await openweatherkey.json();
   openweatherkey = openweatherkey.openweather;
+  */
 
   if (openweatherkey === undefined)
     req = 'openweather.json';
   else
     req = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${openweatherkey}&units=imperial`;
 
-    console.log(req);
   // we kinda have to await the response of this because, like, what else are we gonna do?
   let owResponse = await updateOW(req);
 
   // docs: https://openweathermap.org/api/one-call-3
-  document.getElementById("temp").innerHTML = `${Math.round(owResponse.current.temp)}° out.`;
-  //console.log(owResponse.daily[0].temp.max);
-  document.getElementById("highlow").innerHTML = `l: ${owResponse.daily[0].temp.min}; h: ${owResponse.daily[0].temp.max}`
+  document.getElementById("temp").innerHTML = `, and ${Math.round(owResponse.current.temp)}°F out.`;
+
+  document.getElementById("highlow").innerHTML = `there's a low of ${Math.round(owResponse.daily[0].temp.min)}°,  high of ${Math.round(owResponse.daily[0].temp.max)}°`
 })();
 
 /*
