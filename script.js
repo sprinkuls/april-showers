@@ -165,6 +165,7 @@ function getRiseSet(lat, long, offset=0) {
 
   return [riseTime, noonTime, setTime];
 }
+
 // convert some unix timestamp to HH:MM am/pm format
 function UNIXtoHHMM(timestamp) {
   const date = new Date(timestamp);
@@ -289,10 +290,19 @@ async function getLatLon() {
   return([json.lat, json.lon]);
 }
 
+function resizeCanvas() {
+  canvas = document.getElementById("canvas");
+  canvas.height = document.documentElement.clientHeight;
+  canvas.width = document.documentElement.clientWidth / 3;
+}
+
 //////////////////// where code executes ////////////////////
 
 // blue
 updateTime();
+
+resizeCanvas();
+
 
 // paint the town red
 (async () => {
@@ -334,23 +344,21 @@ updateTime();
   // draw some junk
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
-  let max = 20;
-  // why is it like this? why isn't it style.width? perplexing
-  canvas.width = max*25;
-  canvas.height = max*25;
-  for (let i = 1; i <= max; i++) {
-    for (let j = 1; j <= max; j++) {
-      let val = (255/(max * max)) * (i*j);
-      ctx.fillStyle = `rgb(${val},${val},${val})`
-      ctx.fillRect((i * 25)-25, (j * 25)-25, 25, 25);
-    }
-  }
+  // TODO: figure out how to make this be the size of the screen? idk maybe some callback
+  // that runs on screen resize? who knows!!
+  // ok its called a hook not a callback
+  // https://stackoverflow.com/questions/641857/javascript-window-resize-event
+  //canvas.width = 500;
+  let gradient = ctx.createLinearGradient(0, canvas.height/2, canvas.width, canvas.height/2);
+  //SAVE ME TEMPLATE STRINGS (why is this process so jank whatever)
+  let tmpRGB = [255, 255, 255];
+  let lights1 = `rgb(${tmpRGB[0]} ${tmpRGB[1]} ${tmpRGB[2]} / 0%)`
+  let lights2 = `rgb(${tmpRGB[0]} ${tmpRGB[1]} ${tmpRGB[2]})`
 
-  /*
-  ctx.fillStyle = "green";
-  ctx.fillRect(10, 10, 150, 100);
-  */
-
+  gradient.addColorStop(0, lights1)
+  gradient.addColorStop(1, lights2);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // if there's a real API key given, make a real request; otherwise, use the sample response
   let req, openweatherkey;

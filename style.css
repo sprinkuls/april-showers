@@ -1,13 +1,18 @@
 body {
     /*background-color: #dfd6c9;*/
     font-family: 'Consolas', monospace;
-    background-color: #111;
+    /* TODO: don't set this here (except maybe with some default fallback value)
+     * instead just do it from js */
+    background-color: #eeeedd;
+    background-color: hsl(39, 24%, 81%);
+    /*
     background-image: url("window\ wip1.png");
     padding-left: 5%;
     padding-top: 1%;
-    /*color: #3e7989; */
     padding-left: 7em;
     padding-top: 1em;
+    */
+    margin: 0;
     /* color: #fff6e9; background-color: #6e8999;*/
 }
 
